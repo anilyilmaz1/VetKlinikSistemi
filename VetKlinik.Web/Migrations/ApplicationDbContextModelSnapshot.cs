@@ -358,7 +358,7 @@ namespace VetKlinik.Web.Migrations
                         .HasColumnType("nvarchar(40)");
 
                     b.Property<decimal>("WeightKg")
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(6,3)");
 
                     b.HasKey("Id");
 

@@ -32,8 +32,8 @@ public class Pet
     public DateTime BirthDate { get; set; }
 
     [Required(ErrorMessage = "Kilo bilgisi zorunludur.")]
-    [Column(TypeName = "decimal(5,2)")]
-    [Range(0.1, 200, ErrorMessage = "Kilo 0.1 ile 200 kg arasında olmalıdır.")]
+    [Column(TypeName = "decimal(6,3)")]
+    [Range(0.001, 200, ErrorMessage = "Kilo 0.001 ile 200 kg arasında olmalıdır.")]
     [Display(Name = "Kilo (kg)")]
     public decimal WeightKg { get; set; }
 

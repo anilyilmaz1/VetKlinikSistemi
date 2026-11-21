@@ -27,7 +27,7 @@ public class PetViewModel
     public DateTime BirthDate { get; set; } = DateTime.Today;
 
     [Required(ErrorMessage = "Kilo bilgisi zorunludur.")]
-    [Range(0.1, 200, ErrorMessage = "Kilo 0.1 ile 200 kg arasında olmalıdır.")]
+    [Range(0.001, 200, ErrorMessage = "Kilo 0.001 ile 200 kg arasında olmalıdır.")]
     [Display(Name = "Kilo (kg)")]
     public decimal WeightKg { get; set; }
 

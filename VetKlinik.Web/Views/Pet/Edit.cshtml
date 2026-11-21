@@ -1,0 +1,85 @@
+@model VetKlinik.Web.Models.ViewModels.PetViewModel
+@{
+    ViewData["Title"] = "Evcil Hayvan Düzenle";
+}
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="card-title mb-4">Evcil Hayvan Bilgilerini Düzenle</h3>
+
+                <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="ExistingPhotoUrl" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Species" class="form-label"></label>
+                            <select asp-for="Species" class="form-select">
+                                <option value="">Tür Seçiniz...</option>
+                                <option value="Kedi">Kedi</option>
+                                <option value="Köpek">Köpek</option>
+                                <option value="Kuş">Kuş</option>
+                                <option value="Tavşan">Tavşan</option>
+                                <option value="Hamster">Hamster</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                            <span asp-validation-for="Species" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Breed" class="form-label"></label>
+                            <input asp-for="Breed" class="form-control" />
+                            <span asp-validation-for="Breed" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="BirthDate" class="form-label"></label>
+                            <input asp-for="BirthDate" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="BirthDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="WeightKg" class="form-label"></label>
+                            <input asp-for="WeightKg" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="WeightKg" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.ExistingPhotoUrl))
+                    {
+                        <div class="mb-3">
+                            <label class="form-label d-block">Mevcut Fotoğraf</label>
+                            <img src="@Model.ExistingPhotoUrl" alt="@Model.Name" class="rounded border" style="max-height: 120px;" />
+                        </div>
+                    }
+
+                    <div class="mb-4">
+                        <label asp-for="PhotoFile" class="form-label">Fotoğrafı Değiştir (İsteğe Bağlı)</label>
+                        <input asp-for="PhotoFile" type="file" accept="image/*" class="form-control" />
+                        <span asp-validation-for="PhotoFile" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-action="Index" class="btn btn-outline-secondary">İptal</a>
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

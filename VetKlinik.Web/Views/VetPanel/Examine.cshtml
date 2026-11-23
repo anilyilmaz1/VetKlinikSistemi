@@ -1,0 +1,209 @@
+@model VetKlinik.Web.Models.ViewModels.VetExamineViewModel
+@using VetKlinik.Web.Models.Enums
+
+@{
+    ViewData["Title"] = "Muayene ve Aşı Kaydı";
+    var app = Model.Appointment;
+    var pet = app.Pet;
+    var isVaccinationService = (app.VetService?.Name ?? "")
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        .Any(word => word.StartsWith("Aşı", StringComparison.OrdinalIgnoreCase));
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Muayene ve Klinik İşlemleri</h2>
+            <p class="text-muted mb-0">Randevu #@app.Id • @app.AppointmentDate.ToString("dd.MM.yyyy") (@app.StartTime.ToString(@"hh\:mm") - @app.EndTime.ToString(@"hh\:mm"))</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">← Panele Dön</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Sol Sütun: Hasta Bilgileri ve Muayene Notu -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">Hasta ve Randevu Bilgileri</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Evcil Hayvan</small>
+                            <span class="fw-semibold">@pet?.Name (@pet?.Species - @pet?.Breed)</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Doğum Tarihi / Kilo</small>
+                            <span class="fw-semibold">@pet?.BirthDate.ToString("dd.MM.yyyy") • @pet?.WeightKg.ToString("0.###") kg</span>
+                        </div>
+                        <div class="col-6 mt-3">
+                            <small class="text-muted d-block">Hasta Sahibi</small>
+                            <span class="fw-semibold">@(pet?.Owner?.FullName ?? pet?.Owner?.Email)</span>
+                        </div>
+                        <div class="col-6 mt-3">
+                            <small class="text-muted d-block">Talep Edilen Hizmet</small>
+                            <span class="fw-semibold">@app.VetService?.Name (@app.Price.ToString("N2") ₺)</span>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <small class="text-muted d-block">Hasta Sahibinin Şikayet / Notu</small>
+                            <div class="p-2 bg-light rounded mt-1">
+                                @(string.IsNullOrWhiteSpace(app.OwnerNotes) ? "Not girilmemiş." : app.OwnerNotes)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Hekim Muayene Notu</h5>
+                    @if (app.Status == AppointmentStatus.Completed)
+                    {
+                        <span class="badge bg-success">Tamamlandı</span>
+                    }
+                </div>
+                <div class="card-body">
+                    <form asp-action="CompleteExamination" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="appointmentId" value="@app.Id" />
+
+                        <div class="mb-3">
+                            <label for="examinationNotes" class="form-label fw-semibold">Teşhis, Tedavi ve Öneriler</label>
+                            <textarea id="examinationNotes" name="examinationNotes" rows="5" class="form-control"
+                                      maxlength="1000"
+                                      placeholder="Muayene bulgularını, uygulanan tedaviyi ve hasta sahibine önerilerinizi yazınız...">@Model.ExaminationNotes</textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            @(app.Status == AppointmentStatus.Completed ? "Muayene Notunu Güncelle" : "Muayeneyi Tamamla ve Kaydet")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Sütun: Aşı Kaydı Ekleme ve Aşı Geçmişi -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-0">Aşı İşlemi</h5>
+                        @if (!isVaccinationService)
+                        {
+                            <small class="text-muted">Bu randevu aşı dışı bir hizmet içindir; gerekirse ek aşı girebilirsiniz.</small>
+                        }
+                    </div>
+                    @if (!isVaccinationService)
+                    {
+                        <button class="btn btn-sm btn-outline-primary text-nowrap" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#vaccinationFormCollapse"
+                                aria-expanded="false" aria-controls="vaccinationFormCollapse">
+                            + Ek Aşı Ekle
+                        </button>
+                    }
+                </div>
+                <div id="vaccinationFormCollapse" class="collapse @(isVaccinationService ? "show" : "")">
+                    <div class="card-body border-top">
+                        <form asp-action="AddVaccination" method="post">
+                            @Html.AntiForgeryToken()
+                            <input asp-for="NewVaccination.AppointmentId" type="hidden" />
+
+                            <div class="mb-3">
+                                <label asp-for="NewVaccination.VaccineName" class="form-label fw-semibold"></label>
+                                <input asp-for="NewVaccination.VaccineName" class="form-control" placeholder="Örn: Kuduz Aşısı, Karma Aşı (2. Doz)" />
+                                <span asp-validation-for="NewVaccination.VaccineName" class="text-danger small"></span>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label asp-for="NewVaccination.AdministeredDate" class="form-label fw-semibold"></label>
+                                    <input asp-for="NewVaccination.AdministeredDate" type="date" class="form-control" />
+                                    <span asp-validation-for="NewVaccination.AdministeredDate" class="text-danger small"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <label asp-for="NewVaccination.NextDueDate" class="form-label fw-semibold"></label>
+                                    <input asp-for="NewVaccination.NextDueDate" type="date" class="form-control" />
+                                    <span asp-validation-for="NewVaccination.NextDueDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="NewVaccination.Notes" class="form-label fw-semibold"></label>
+                                <input asp-for="NewVaccination.Notes" class="form-control" placeholder="Aşı seri no veya gözlem notu (opsiyonel)" />
+                                <span asp-validation-for="NewVaccination.Notes" class="text-danger small"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100">+ Aşıyı Karneye İşle</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">@pet?.Name — Aşı Geçmişi</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (!Model.VaccinationHistory.Any())
+                    {
+                        <div class="p-4 text-center text-muted">
+                            Bu evcil hayvana ait henüz kayıtlı bir aşı bulunmuyor.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Aşı Adı</th>
+                                        <th>Yapılış</th>
+                                        <th>Sonraki Doz</th>
+                                        <th>Hekim</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var v in Model.VaccinationHistory)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@v.VaccineName</div>
+                                                @if (!string.IsNullOrWhiteSpace(v.Notes))
+                                                {
+                                                    <small class="text-muted">@v.Notes</small>
+                                                }
+                                            </td>
+                                            <td>@v.AdministeredDate.ToString("dd.MM.yyyy")</td>
+                                            <td>@(v.NextDueDate?.ToString("dd.MM.yyyy") ?? "-")</td>
+                                            <td><small>@(v.Veterinarian?.FullName ?? "-")</small></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

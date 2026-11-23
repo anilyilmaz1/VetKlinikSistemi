@@ -1,0 +1,184 @@
+@model IEnumerable<VetKlinik.Web.Models.Entities.Appointment>
+@using VetKlinik.Web.Models.Enums
+
+@{
+    ViewData["Title"] = "Veteriner Hekim Paneli";
+    var selectedStatus = ViewBag.SelectedStatus as AppointmentStatus?;
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Veteriner Hekim Paneli</h2>
+            <p class="text-muted mb-0">@ViewBag.VeterinarianName • @ViewBag.ClinicName</p>
+        </div>
+        <a asp-action="Availabilities" class="btn btn-outline-primary">
+            Çalışma Saatlerimi Düzenle
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Özet Kartlar -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-warning">
+                <div class="card-body">
+                    <div class="text-muted small">Onay Bekleyen</div>
+                    <div class="fs-3 fw-bold">@ViewBag.PendingCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-info">
+                <div class="card-body">
+                    <div class="text-muted small">Bugünkü Aktif</div>
+                    <div class="fs-3 fw-bold">@ViewBag.TodayCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-primary">
+                <div class="card-body">
+                    <div class="text-muted small">Onaylanan</div>
+                    <div class="fs-3 fw-bold">@ViewBag.ApprovedCount</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-success">
+                <div class="card-body">
+                    <div class="text-muted small">Tamamlanan</div>
+                    <div class="fs-3 fw-bold">@ViewBag.CompletedCount</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Durum Filtreleri -->
+    <div class="mb-3 d-flex flex-wrap gap-2">
+        <a asp-action="Index" class="btn btn-sm @(selectedStatus == null ? "btn-dark" : "btn-outline-dark")">Tümü</a>
+        <a asp-action="Index" asp-route-status="@AppointmentStatus.Pending"
+           class="btn btn-sm @(selectedStatus == AppointmentStatus.Pending ? "btn-warning" : "btn-outline-warning text-dark")">Bekleyenler</a>
+        <a asp-action="Index" asp-route-status="@AppointmentStatus.Approved"
+           class="btn btn-sm @(selectedStatus == AppointmentStatus.Approved ? "btn-primary" : "btn-outline-primary")">Onaylananlar</a>
+        <a asp-action="Index" asp-route-status="@AppointmentStatus.Completed"
+           class="btn btn-sm @(selectedStatus == AppointmentStatus.Completed ? "btn-success" : "btn-outline-success")">Tamamlananlar</a>
+        <a asp-action="Index" asp-route-status="@AppointmentStatus.Rejected"
+           class="btn btn-sm @(selectedStatus == AppointmentStatus.Rejected ? "btn-danger" : "btn-outline-danger")">Reddedilenler</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="card border-0 shadow-sm p-5 text-center">
+            <h5 class="fw-semibold">Bu filtreye uygun randevu bulunamadı</h5>
+            <p class="text-muted mb-0">Farklı bir durum filtresi seçerek diğer randevularınızı inceleyebilirsiniz.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tarih & Saat</th>
+                            <th>Hasta (Evcil Hayvan)</th>
+                            <th>Hasta Sahibi</th>
+                            <th>Hizmet</th>
+                            <th>Hasta Notu</th>
+                            <th>Durum</th>
+                            <th class="text-end">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var badgeClass = item.Status switch
+                            {
+                                AppointmentStatus.Pending => "bg-warning text-dark",
+                                AppointmentStatus.Approved => "bg-primary",
+                                AppointmentStatus.Completed => "bg-success",
+                                AppointmentStatus.Rejected => "bg-danger",
+                                AppointmentStatus.Cancelled => "bg-secondary",
+                                _ => "bg-light text-dark"
+                            };
+
+                            var statusText = item.Status switch
+                            {
+                                AppointmentStatus.Pending => "Bekliyor",
+                                AppointmentStatus.Approved => "Onaylandı",
+                                AppointmentStatus.Completed => "Tamamlandı",
+                                AppointmentStatus.Rejected => "Reddedildi",
+                                AppointmentStatus.Cancelled => "İptal Edildi",
+                                _ => item.Status.ToString()
+                            };
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.AppointmentDate.ToString("dd.MM.yyyy")</div>
+                                    <small class="text-muted">@item.StartTime.ToString(@"hh\:mm") - @item.EndTime.ToString(@"hh\:mm")</small>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@item.Pet?.Name</div>
+                                    <small class="text-muted">@item.Pet?.Species (@item.Pet?.Breed)</small>
+                                </td>
+                                <td>
+                                    <div>@(item.Pet?.Owner?.FullName ?? item.Pet?.Owner?.Email)</div>
+                                    <small class="text-muted">@item.Pet?.Owner?.Email</small>
+                                </td>
+                                <td>
+                                    <div>@item.VetService?.Name</div>
+                                    <small class="text-muted">@item.DurationMinutes dk • @item.Price.ToString("N2") ₺</small>
+                                </td>
+                                <td style="max-width: 220px;">
+                                    <small class="text-muted">
+                                        @(string.IsNullOrWhiteSpace(item.OwnerNotes) ? "-" : item.OwnerNotes)
+                                    </small>
+                                </td>
+                                <td>
+                                    <span class="badge @badgeClass">@statusText</span>
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    @if (item.Status == AppointmentStatus.Pending)
+                                    {
+                                        <form asp-action="Approve" asp-route-id="@item.Id" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-success">Onayla</button>
+                                        </form>
+                                        <form asp-action="Reject" asp-route-id="@item.Id" method="post" class="d-inline"
+                                              onsubmit="return confirm('Bu randevu talebini reddetmek istediğinize emin misiniz?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Reddet</button>
+                                        </form>
+                                    }
+
+                                    @if (item.Status == AppointmentStatus.Approved || item.Status == AppointmentStatus.Completed)
+                                    {
+                                        <a asp-action="Examine" asp-route-id="@item.Id" class="btn btn-sm btn-primary">
+                                            @(item.Status == AppointmentStatus.Completed ? "Muayene & Aşı Detayı" : "Muayene Et")
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

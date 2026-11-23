@@ -1,0 +1,144 @@
+@model VetKlinik.Web.Models.ViewModels.AdminDashboardViewModel
+@using VetKlinik.Web.Models.Enums
+
+@{
+    ViewData["Title"] = "Yönetim Paneli";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Klinik Yönetim Paneli</h2>
+            <p class="text-muted mb-0">
+                @(Model.Clinic?.Name ?? "Klinik Tanımlanmamış")
+                @if (Model.Clinic != null)
+                {
+                    <span>• Çalışma Saatleri: @Model.Clinic.OpeningTime.ToString(@"hh\:mm") - @Model.Clinic.ClosingTime.ToString(@"hh\:mm")</span>
+                }
+            </p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="ClinicSettings" class="btn btn-outline-dark">Klinik Ayarları</a>
+            <a asp-action="Services" class="btn btn-outline-primary">Hizmet Yönetimi</a>
+            <a asp-action="Veterinarians" class="btn btn-primary">Veteriner Hekimler</a>
+        </div>
+    </div>
+
+    <!-- Üst İstatistik Kartları -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-primary">
+                <div class="card-body">
+                    <div class="text-muted small">Veteriner Hekim</div>
+                    <div class="fs-3 fw-bold">@Model.TotalVeterinarians</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-info">
+                <div class="card-body">
+                    <div class="text-muted small">Aktif Hizmet</div>
+                    <div class="fs-3 fw-bold">@Model.TotalServices</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-warning">
+                <div class="card-body">
+                    <div class="text-muted small">Kayıtlı Evcil Hayvan</div>
+                    <div class="fs-3 fw-bold">@Model.TotalPets</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm border-start border-4 border-success">
+                <div class="card-body">
+                    <div class="text-muted small">Tamamlanan Ciro</div>
+                    <div class="fs-3 fw-bold">@Model.CompletedRevenue.ToString("N2") ₺</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Randevu Durum Filtreleri -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h5 class="fw-bold mb-0">Tüm Klinik Randevuları (@Model.TotalAppointments)</h5>
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="Index" class="btn btn-sm @(Model.SelectedStatus == null ? "btn-dark" : "btn-outline-dark")">Tümü (@Model.TotalAppointments)</a>
+            <a asp-action="Index" asp-route-status="@AppointmentStatus.Pending"
+               class="btn btn-sm @(Model.SelectedStatus == AppointmentStatus.Pending ? "btn-warning" : "btn-outline-warning text-dark")">Bekleyen (@Model.PendingAppointments)</a>
+            <a asp-action="Index" asp-route-status="@AppointmentStatus.Approved"
+               class="btn btn-sm @(Model.SelectedStatus == AppointmentStatus.Approved ? "btn-primary" : "btn-outline-primary")">Onaylı (@Model.ApprovedAppointments)</a>
+            <a asp-action="Index" asp-route-status="@AppointmentStatus.Completed"
+               class="btn btn-sm @(Model.SelectedStatus == AppointmentStatus.Completed ? "btn-success" : "btn-outline-success")">Tamamlanan (@Model.CompletedAppointments)</a>
+        </div>
+    </div>
+
+    @if (!Model.Appointments.Any())
+    {
+        <div class="card border-0 shadow-sm p-5 text-center">
+            <h5 class="fw-semibold">Bu filtreye uygun randevu bulunamadı</h5>
+            <p class="text-muted mb-0">Farklı bir durum seçerek diğer klinik randevularını görüntüleyebilirsiniz.</p>
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tarih & Saat</th>
+                            <th>Veteriner Hekim</th>
+                            <th>Hasta (Evcil Hayvan)</th>
+                            <th>Hasta Sahibi</th>
+                            <th>Hizmet</th>
+                            <th>Ücret</th>
+                            <th>Durum</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Appointments)
+                        {
+                            var badgeClass = item.Status switch
+                            {
+                                AppointmentStatus.Pending => "bg-warning text-dark",
+                                AppointmentStatus.Approved => "bg-primary",
+                                AppointmentStatus.Completed => "bg-success",
+                                AppointmentStatus.Rejected => "bg-danger",
+                                AppointmentStatus.Cancelled => "bg-secondary",
+                                _ => "bg-light text-dark"
+                            };
+
+                            var statusText = item.Status switch
+                            {
+                                AppointmentStatus.Pending => "Bekliyor",
+                                AppointmentStatus.Approved => "Onaylandı",
+                                AppointmentStatus.Completed => "Tamamlandı",
+                                AppointmentStatus.Rejected => "Reddedildi",
+                                AppointmentStatus.Cancelled => "İptal Edildi",
+                                _ => item.Status.ToString()
+                            };
+
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@item.AppointmentDate.ToString("dd.MM.yyyy")</div>
+                                    <small class="text-muted">@item.StartTime.ToString(@"hh\:mm") - @item.EndTime.ToString(@"hh\:mm")</small>
+                                </td>
+                                <td class="fw-semibold">@item.Veterinarian?.FullName</td>
+                                <td>
+                                    <div>@item.Pet?.Name</div>
+                                    <small class="text-muted">@item.Pet?.Species (@item.Pet?.Breed)</small>
+                                </td>
+                                <td>@(item.Pet?.Owner?.FullName ?? item.Pet?.Owner?.Email)</td>
+                                <td>@item.VetService?.Name</td>
+                                <td>@item.Price.ToString("N2") ₺</td>
+                                <td><span class="badge @badgeClass">@statusText</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

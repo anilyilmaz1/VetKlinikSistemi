@@ -25,7 +25,13 @@
         </li>
        @if (User.Identity != null && User.Identity.IsAuthenticated)
         {
-            if (User.IsInRole("Veterinarian"))
+            if (User.IsInRole("Admin"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link text-dark fw-semibold" asp-area="" asp-controller="Admin" asp-action="Index">Yönetim Paneli</a>
+                </li>
+            }
+            else if (User.IsInRole("Veterinarian"))
             {
                 <li class="nav-item">
                     <a class="nav-link text-dark fw-semibold" asp-area="" asp-controller="VetPanel" asp-action="Index">Hekim Paneli</a>

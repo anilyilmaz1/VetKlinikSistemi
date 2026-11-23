@@ -1,0 +1,77 @@
+@model IEnumerable<VetKlinik.Web.Models.Entities.Veterinarian>
+
+@{
+    ViewData["Title"] = "Veteriner Hekimler";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Veteriner Hekim Kadrosu</h2>
+            <p class="text-muted mb-0">Hekim profillerini ve verebilecekleri hizmetleri yönetin.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Panele Dön</a>
+            <a asp-action="CreateVeterinarian" class="btn btn-primary">+ Yeni Hekim Ekle</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        @foreach (var vet in Model)
+        {
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="fw-bold mb-0">@vet.FullName</h5>
+                                <small class="text-primary fw-semibold">@vet.Specialization</small>
+                            </div>
+                            <span class="badge bg-light text-dark border">@vet.Appointments.Count Randevu</span>
+                        </div>
+
+                        <div class="small text-muted mb-2">@vet.User?.Email</div>
+
+                        @if (!string.IsNullOrWhiteSpace(vet.Bio))
+                        {
+                            <p class="small text-secondary mb-3">@vet.Bio</p>
+                        }
+
+                        <div class="mb-3">
+                            <div class="small fw-semibold mb-1">Verdiği Hizmetler:</div>
+                            @if (!vet.VeterinarianServices.Any())
+                            {
+                                <span class="badge bg-warning text-dark">Henüz hizmet atanmamış</span>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach (var vs in vet.VeterinarianServices)
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                            @vs.VetService?.Name
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <div class="mt-auto pt-2 border-top d-flex justify-content-end">
+                            <a asp-action="EditVeterinarian" asp-route-id="@vet.Id" class="btn btn-sm btn-outline-primary">
+                                Bilgileri & Hizmetleri Düzenle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

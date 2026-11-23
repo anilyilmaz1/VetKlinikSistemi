@@ -1,0 +1,73 @@
+@model IEnumerable<VetKlinik.Web.Models.Entities.VetService>
+
+@{
+    ViewData["Title"] = "Hizmet Yönetimi";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Klinik Hizmetleri</h2>
+            <p class="text-muted mb-0">Muayene, aşılama ve operasyon hizmetlerini yönetin.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Panele Dön</a>
+            <a asp-action="CreateService" class="btn btn-primary">+ Yeni Hizmet Ekle</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Hizmet Adı</th>
+                        <th>Açıklama</th>
+                        <th>Süre</th>
+                        <th>Ücret</th>
+                        <th>Atanan Hekim</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@item.Name</td>
+                            <td style="max-width: 300px;"><small class="text-muted">@(item.Description ?? "-")</small></td>
+                            <td>@item.DurationMinutes dk</td>
+                            <td class="fw-semibold">@item.Price.ToString("N2") ₺</td>
+                            <td>
+                                <span class="badge bg-info text-dark">@item.VeterinarianServices.Count Hekim</span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="EditService" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                <form asp-action="DeleteService" asp-route-id="@item.Id" method="post" class="d-inline"
+                                      onsubmit="return confirm('Bu hizmeti silmek istediğinize emin misiniz?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

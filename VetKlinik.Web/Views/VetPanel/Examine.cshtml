@@ -100,58 +100,71 @@
 
         <!-- Sağ Sütun: Aşı Kaydı Ekleme ve Aşı Geçmişi -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center gap-2">
-                    <div>
-                        <h5 class="fw-bold mb-0">Aşı İşlemi</h5>
-                        @if (!isVaccinationService)
-                        {
-                            <small class="text-muted">Bu randevu aşı dışı bir hizmet içindir; gerekirse ek aşı girebilirsiniz.</small>
-                        }
-                    </div>
-                    @if (!isVaccinationService)
-                    {
-                        <button class="btn btn-sm btn-outline-primary text-nowrap" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#vaccinationFormCollapse"
-                                aria-expanded="false" aria-controls="vaccinationFormCollapse">
-                            + Ek Aşı Ekle
-                        </button>
-                    }
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0">@pet?.Name — Aşı Geçmişi</h5>
                 </div>
-                <div id="vaccinationFormCollapse" class="collapse @(isVaccinationService ? "show" : "")">
-                    <div class="card-body border-top">
-                        <form asp-action="AddVaccination" method="post">
-                            @Html.AntiForgeryToken()
-                            <input asp-for="NewVaccination.AppointmentId" type="hidden" />
+                <div class="card-body p-0">
+                    @if (!Model.VaccinationHistory.Any())
+                    {
+                        <div class="p-4 text-center text-muted">
+                            Bu evcil hayvana ait henüz kayıtlı bir aşı bulunmuyor.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Aşı Adı</th>
+                                        <th>Yapılış</th>
+                                        <th>Sonraki Doz</th>
+                                        <th>Hekim</th>
+                                        <th class="text-end">İşlem</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var v in Model.VaccinationHistory)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">@v.VaccineName</div>
+                                                @if (!string.IsNullOrWhiteSpace(v.Notes))
+                                                {
+                                                    <small class="text-muted">@v.Notes</small>
+                                                }
+                                            </td>
+                                            <td>@v.AdministeredDate.ToString("dd.MM.yyyy")</td>
+                                            <td>@(v.NextDueDate?.ToString("dd.MM.yyyy") ?? "-")</td>
+                                            <td><small>@(v.Veterinarian?.FullName ?? "-")</small></td>
+                                            <td class="text-end text-nowrap">
+                                                @if (v.VeterinarianId == app.VeterinarianId)
+                                                {
+                                                    <a asp-action="EditVaccination"
+                                                       asp-route-id="@v.Id"
+                                                       asp-route-appointmentId="@app.Id"
+                                                       class="btn btn-sm btn-outline-primary">Düzenle</a>
 
-                            <div class="mb-3">
-                                <label asp-for="NewVaccination.VaccineName" class="form-label fw-semibold"></label>
-                                <input asp-for="NewVaccination.VaccineName" class="form-control" placeholder="Örn: Kuduz Aşısı, Karma Aşı (2. Doz)" />
-                                <span asp-validation-for="NewVaccination.VaccineName" class="text-danger small"></span>
-                            </div>
-
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-6">
-                                    <label asp-for="NewVaccination.AdministeredDate" class="form-label fw-semibold"></label>
-                                    <input asp-for="NewVaccination.AdministeredDate" type="date" class="form-control" />
-                                    <span asp-validation-for="NewVaccination.AdministeredDate" class="text-danger small"></span>
-                                </div>
-                                <div class="col-md-6">
-                                    <label asp-for="NewVaccination.NextDueDate" class="form-label fw-semibold"></label>
-                                    <input asp-for="NewVaccination.NextDueDate" type="date" class="form-control" />
-                                    <span asp-validation-for="NewVaccination.NextDueDate" class="text-danger small"></span>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label asp-for="NewVaccination.Notes" class="form-label fw-semibold"></label>
-                                <input asp-for="NewVaccination.Notes" class="form-control" placeholder="Aşı seri no veya gözlem notu (opsiyonel)" />
-                                <span asp-validation-for="NewVaccination.Notes" class="text-danger small"></span>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary w-100">+ Aşıyı Karneye İşle</button>
-                        </form>
-                    </div>
+                                                    <form asp-action="DeleteVaccination" method="post" class="d-inline"
+                                                          onsubmit="return confirm('Bu aşı kaydını silmek istediğinize emin misiniz?');">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@v.Id" />
+                                                        <input type="hidden" name="appointmentId" value="@app.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">—</small>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
                 </div>
             </div>
 

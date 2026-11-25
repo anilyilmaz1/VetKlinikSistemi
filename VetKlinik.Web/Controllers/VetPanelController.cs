@@ -238,6 +238,98 @@ public class VetPanelController : Controller
         return RedirectToAction(nameof(Examine), new { id = input.AppointmentId });
     }
 
+    // GET: /VetPanel/EditVaccination/5?appointmentId=3
+    public async Task<IActionResult> EditVaccination(int id, int appointmentId)
+    {
+        var vet = await GetCurrentVeterinarianAsync();
+        if (vet == null)
+            return Forbid();
+
+        var record = await _context.VaccinationRecords
+            .Include(vr => vr.Pet)
+            .FirstOrDefaultAsync(vr => vr.Id == id && vr.VeterinarianId == vet.Id);
+
+        if (record == null)
+            return NotFound();
+
+        var model = new VetVaccinationEditViewModel
+        {
+            Id = record.Id,
+            AppointmentId = appointmentId,
+            PetName = record.Pet?.Name ?? "-",
+            VaccineName = record.VaccineName,
+            AdministeredDate = record.AdministeredDate,
+            NextDueDate = record.NextDueDate,
+            Notes = record.Notes
+        };
+
+        return View(model);
+    }
+
+    // POST: /VetPanel/EditVaccination/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditVaccination(int id, VetVaccinationEditViewModel model)
+    {
+        if (id != model.Id)
+            return BadRequest();
+
+        var vet = await GetCurrentVeterinarianAsync();
+        if (vet == null)
+            return Forbid();
+
+        var record = await _context.VaccinationRecords
+            .Include(vr => vr.Pet)
+            .FirstOrDefaultAsync(vr => vr.Id == id && vr.VeterinarianId == vet.Id);
+
+        if (record == null)
+            return NotFound();
+
+        if (model.NextDueDate.HasValue && model.NextDueDate.Value.Date < model.AdministeredDate.Date)
+        {
+            ModelState.AddModelError(nameof(model.NextDueDate), "Sonraki doz tarihi uygulama tarihinden önce olamaz.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            model.PetName = record.Pet?.Name ?? "-";
+            return View(model);
+        }
+
+        record.VaccineName = model.VaccineName.Trim();
+        record.AdministeredDate = model.AdministeredDate.Date;
+        record.NextDueDate = model.NextDueDate?.Date;
+        record.Notes = model.Notes?.Trim();
+
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"'{record.VaccineName}' aşı kaydı güncellendi.";
+        return RedirectToAction(nameof(Examine), new { id = model.AppointmentId });
+    }
+
+    // POST: /VetPanel/DeleteVaccination
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteVaccination(int id, int appointmentId)
+    {
+        var vet = await GetCurrentVeterinarianAsync();
+        if (vet == null)
+            return Forbid();
+
+        var record = await _context.VaccinationRecords
+            .FirstOrDefaultAsync(vr => vr.Id == id && vr.VeterinarianId == vet.Id);
+
+        if (record == null)
+            return NotFound();
+
+        var vaccineName = record.VaccineName;
+        _context.VaccinationRecords.Remove(record);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"'{vaccineName}' aşı kaydı silindi.";
+        return RedirectToAction(nameof(Examine), new { id = appointmentId });
+    }
+
     // GET: /VetPanel/Availabilities
     public async Task<IActionResult> Availabilities()
     {

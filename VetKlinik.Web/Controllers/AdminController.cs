@@ -439,4 +439,42 @@ public class AdminController : Controller
         TempData["SuccessMessage"] = $"{vet.FullName} bilgileri ve hizmet atamaları güncellendi.";
         return RedirectToAction(nameof(Veterinarians));
     }
+
+    // POST: /Admin/DeleteVeterinarian/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteVeterinarian(int id)
+    {
+        var vet = await _context.Veterinarians
+            .Include(v => v.User)
+            .Include(v => v.Appointments)
+            .Include(v => v.VeterinarianServices)
+            .Include(v => v.Availabilities)
+            .FirstOrDefaultAsync(v => v.Id == id);
+
+        if (vet == null)
+            return NotFound();
+
+        if (vet.Appointments.Any())
+        {
+            TempData["ErrorMessage"] = $"'{vet.FullName}' adına kayıtlı {vet.Appointments.Count} adet randevu bulunduğu için silinemez.";
+            return RedirectToAction(nameof(Veterinarians));
+        }
+
+        var vetName = vet.FullName;
+        var user = vet.User;
+
+        _context.VeterinarianServices.RemoveRange(vet.VeterinarianServices);
+        _context.VeterinarianAvailabilities.RemoveRange(vet.Availabilities);
+        _context.Veterinarians.Remove(vet);
+        await _context.SaveChangesAsync();
+
+        if (user != null)
+        {
+            await _userManager.DeleteAsync(user);
+        }
+
+        TempData["SuccessMessage"] = $"'{vetName}' veteriner hekim kadrosundan silindi.";
+        return RedirectToAction(nameof(Veterinarians));
+    }
 }

@@ -24,6 +24,14 @@
         </div>
     }
 
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <div class="row g-4">
         @foreach (var vet in Model)
         {
@@ -64,10 +72,15 @@
                             }
                         </div>
 
-                        <div class="mt-auto pt-2 border-top d-flex justify-content-end">
+                        <div class="mt-auto pt-2 border-top d-flex justify-content-end gap-2">
                             <a asp-action="EditVeterinarian" asp-route-id="@vet.Id" class="btn btn-sm btn-outline-primary">
                                 Bilgileri & Hizmetleri Düzenle
                             </a>
+                            <form asp-action="DeleteVeterinarian" asp-route-id="@vet.Id" method="post" class="d-inline"
+                                  onsubmit="return confirm('Bu veteriner hekimi ve kullanıcı hesabını silmek istediğinize emin misiniz?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                            </form>
                         </div>
                     </div>
                 </div>
